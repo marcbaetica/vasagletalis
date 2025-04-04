@@ -3,17 +3,15 @@ import requests
 import ftplib
 
 def main():
-    # Citește credențialele din variabilele de mediu (setate ca secrete în GitHub)
+    # Citește credențialele din variabilele de mediu
     vasagle_email = os.getenv("VASAGLE_EMAIL")
     vasagle_pass = os.getenv("VASAGLE_PASSWORD")
     ftp_host = os.getenv("FTP_HOST")
     ftp_user = os.getenv("FTP_USER")
     ftp_pass = os.getenv("FTP_PASS")
 
-    # Creează o sesiune requests pentru a păstra cookie-urile
+    # Creează o sesiune requests
     session = requests.Session()
-
-    # Setează un User-Agent pentru a imita browserul
     session.headers.update({
         "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                        "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -32,24 +30,23 @@ def main():
     r_login.raise_for_status()
     print("Login efectuat cu succes.")
 
-    # Extrage cookie-ul "token" și cel "ziel_distributor_system_eu_session"
+    # Extrage cookie-urile importante
     token_cookie = session.cookies.get("token")
     ziel_cookie = session.cookies.get("ziel_distributor_system_eu_session")
     if token_cookie:
-        session.headers.update({"token": token_cookie})
-        print("Token header set:", token_cookie)
+        print("Token cookie:", token_cookie)
     else:
         print("Token cookie nu a fost găsit!")
     if ziel_cookie:
-        print("Cookie 'ziel_distributor_system_eu_session' găsit:", ziel_cookie)
+        print("Cookie 'ziel_distributor_system_eu_session':", ziel_cookie)
     else:
         print("Cookie 'ziel_distributor_system_eu_session' nu a fost găsit!")
-    
+
     # ------------------------------------------------
     # PASUL B: DESCĂRCARE FIȘIER (export)
     # ------------------------------------------------
     export_url = "https://eu.distributor.songmics.com/api/account/exportStock"
-    # Construiește header-ele de export
+    # Construiește header-ele pentru export, mimicând cererea din browser:
     export_headers = {
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "en-US,en;q=0.9,ro;q=0.8,hu;q=0.7",
@@ -58,11 +55,12 @@ def main():
         "Origin": "https://eu.distributor.songmics.com",
         "Referer": "https://eu.distributor.songmics.com/account",
         "User-Agent": session.headers.get("User-Agent"),
-        "token": token_cookie
+        # Folosim header-ul token (opțional, dacă serverul așteaptă și el separat)
+        "token": token_cookie if token_cookie else ""
     }
-    # Dacă avem și ziel_cookie, adăugăm și el în header-ul "Cookie"
-    if ziel_cookie:
-        export_headers["Cookie"] = f"ziel_distributor_system_eu_session={ziel_cookie}"
+    # Construiește header-ul Cookie exact așa cum îl trimite browserul:
+    if token_cookie and ziel_cookie:
+        export_headers["Cookie"] = f"token={token_cookie}; ziel_distributor_system_eu_session={ziel_cookie}"
     
     # Trimite cererea POST cu corpul "{}"
     r_export = session.post(export_url, headers=export_headers, data="{}")
