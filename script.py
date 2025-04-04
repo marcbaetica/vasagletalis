@@ -21,37 +21,37 @@ def main():
         "email": vasagle_email,
         "password": vasagle_pass
     }
-    # Trimite request-ul POST cu payload-ul JSON
     r_login = session.post(login_url, json=payload)
-    r_login.raise_for_status()  # Aruncă excepție dacă login-ul eșuează
+    r_login.raise_for_status()  # Verifică că login-ul a fost efectuat cu succes
+    print("Login efectuat cu succes:", r_login.status_code)
 
-    print("Login efectuat cu succes.")
-
-    # Extrage token-ul din cookie și actualizează header-ele sesiunii
-    token_value = session.cookies.get("token")
-    if token_value:
-        session.headers.update({"token": token_value})
-        print("Header-ul 'token' a fost setat:", token_value)
+    # ------------------------------------------------
+    # PASUL B: Extrage token-ul din cookie și setează-l ca header
+    # ------------------------------------------------
+    token_cookie = session.cookies.get("token")
+    if token_cookie:
+        session.headers.update({"token": token_cookie})
+        print("Header-ul 'token' a fost setat la:", token_cookie)
     else:
         print("Tokenul nu a fost găsit în cookie-uri.")
 
     # ------------------------------------------------
-    # PASUL B: DESCĂRCARE FIȘIER
+    # PASUL C: DESCĂRCARE FIȘIER
     # ------------------------------------------------
     export_url = "https://eu.distributor.songmics.com/api/account/exportStock"
     r_export = session.post(export_url)
     r_export.raise_for_status()
 
-    # Salvează fișierul ca vasaglestock.xlsx
+    # Salvează conținutul fișierului ca "vasaglestock.xlsx"
     with open("vasaglestock.xlsx", "wb") as f:
         f.write(r_export.content)
     print("Fișierul a fost descărcat și salvat ca 'vasaglestock.xlsx'.")
 
     # ------------------------------------------------
-    # PASUL C: URCARE PE FTP
+    # PASUL D: URCARE PE FTP
     # ------------------------------------------------
     ftp = ftplib.FTP(ftp_host, ftp_user, ftp_pass)
-    ftp.cwd("Vasagle")  # schimbă directorul în folderul "Vasagle"
+    ftp.cwd("Vasagle")  # Navighează în folderul "Vasagle"
 
     with open("vasaglestock.xlsx", "rb") as file:
         ftp.storbinary("STOR vasaglestock.xlsx", file)
