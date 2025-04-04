@@ -23,11 +23,17 @@ def main():
     }
     # Trimite request-ul POST cu payload-ul JSON
     r_login = session.post(login_url, json=payload)
-    r_login.raise_for_status()  # Dacă login-ul eșuează, se va arunca o excepție
+    r_login.raise_for_status()  # Aruncă excepție dacă login-ul eșuează
 
     print("Login efectuat cu succes.")
-    
-    # Acum, cookie-urile (de ex. token și ziel_distributor_system_eu_session) sunt setate în sesiune
+
+    # Extrage token-ul din cookie și actualizează header-ele sesiunii
+    token_value = session.cookies.get("token")
+    if token_value:
+        session.headers.update({"token": token_value})
+        print("Header-ul 'token' a fost setat:", token_value)
+    else:
+        print("Tokenul nu a fost găsit în cookie-uri.")
 
     # ------------------------------------------------
     # PASUL B: DESCĂRCARE FIȘIER
