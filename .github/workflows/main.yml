@@ -1,1 +1,31 @@
+name: VasagleStockDownload
 
+on:
+  schedule:
+    - cron: "0 7 * * *"  # rulează zilnic la ora 07:00 (UTC)
+  workflow_dispatch:     # opțional, permite declanșare manuală din GitHub
+
+jobs:
+  download_and_upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run script
+        # Transmitem secretele ca variabile de mediu
+        env:
+          VASAGLE_EMAIL: ${{ secrets.VASAGLE_EMAIL }}
+          VASAGLE_PASSWORD: ${{ secrets.VASAGLE_PASSWORD }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+        run: python script.py
