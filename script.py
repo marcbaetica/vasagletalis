@@ -18,9 +18,9 @@ def main():
                        "Chrome/135.0.0.0 Safari/537.36")
     })
 
-    # ------------------------------------------------
+    # -------------------------------
     # PASUL A: LOGIN
-    # ------------------------------------------------
+    # -------------------------------
     login_url = "https://eu.distributor.songmics.com/api/account/login"
     payload = {
         "email": vasagle_email,
@@ -42,28 +42,32 @@ def main():
     else:
         print("Cookie 'ziel_distributor_system_eu_session' nu a fost găsit!")
 
-    # ------------------------------------------------
+    # -------------------------------
     # PASUL B: DESCĂRCARE FIȘIER (export)
-    # ------------------------------------------------
+    # -------------------------------
     export_url = "https://eu.distributor.songmics.com/api/account/exportStock"
-    # Construiește header-ele pentru export, mimicând cererea din browser:
+    # Construiește header-ele pentru export, mimând cererea din browser
     export_headers = {
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "en-US,en;q=0.9,ro;q=0.8,hu;q=0.7",
         "Content-Type": "application/json",
-        "Content-Length": "2",  # pentru "{}" avem 2 caractere
         "Origin": "https://eu.distributor.songmics.com",
         "Referer": "https://eu.distributor.songmics.com/account",
         "User-Agent": session.headers.get("User-Agent"),
-        # Folosim header-ul token (opțional, dacă serverul așteaptă și el separat)
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "sec-ch-ua": '"Google Chrome";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
         "token": token_cookie if token_cookie else ""
     }
-    # Construiește header-ul Cookie exact așa cum îl trimite browserul:
+    # Adaugă header-ul Cookie cu ambele valori, așa cum le trimite browserul:
     if token_cookie and ziel_cookie:
         export_headers["Cookie"] = f"token={token_cookie}; ziel_distributor_system_eu_session={ziel_cookie}"
     
-    # Trimite cererea POST cu corpul "{}"
-    r_export = session.post(export_url, headers=export_headers, data="{}")
+    # Trimite cererea POST cu corp gol ("" => Content-Length 0)
+    r_export = session.post(export_url, headers=export_headers, data="")
     try:
         r_export.raise_for_status()
     except Exception as e:
@@ -71,7 +75,7 @@ def main():
         print("Conținutul răspunsului:", r_export.text)
         return
 
-    # Verifică dacă răspunsul este fișier Excel
+    # Verifică dacă răspunsul are tipul așteptat (Excel)
     content_type = r_export.headers.get("content-type", "")
     if "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" not in content_type:
         print("Content-Type neașteptat:", content_type)
@@ -82,9 +86,9 @@ def main():
         f.write(r_export.content)
     print("Fișierul a fost descărcat și salvat ca 'vasaglestock.xlsx'.")
 
-    # ------------------------------------------------
+    # -------------------------------
     # PASUL C: URCARE PE FTP ȘI ÎNLOCUIREA FIȘIERULUI EXISTENT
-    # ------------------------------------------------
+    # -------------------------------
     ftp = ftplib.FTP(ftp_host, ftp_user, ftp_pass)
     ftp.cwd("Vasagle")
 
