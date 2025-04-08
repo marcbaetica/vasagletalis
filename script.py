@@ -1,14 +1,10 @@
+import ftplib
 import os
 import requests
-import ftplib
 
-def main():
+
     # Citește credențialele din variabilele de mediu
-    vasagle_email = os.getenv("VASAGLE_EMAIL")
-    vasagle_pass = os.getenv("VASAGLE_PASSWORD")
-    ftp_host = os.getenv("FTP_HOST")
-    ftp_user = os.getenv("FTP_USER")
-    ftp_pass = os.getenv("FTP_PASS")
+
 
     session = requests.Session()
     session.headers.update({
